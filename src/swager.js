@@ -12,7 +12,16 @@ const options = {
         },
         server: [{
             url : "http://localhost:5000"
-        }]
+        }],
+        components: {
+            securitySchemes: {
+                bearerAuth: { // Este es el esquema de seguridad
+                    type: 'http',
+                    scheme: 'bearer',
+                    bearerFormat: 'JWT',
+                },
+            },
+        },
     },
     // Asegúrate de actualizar estas rutas con las ubicaciones correctas de tus archivos
     apis: ["src/index.js"], // Rutas a los archivos que contienen documentación de Swagger

@@ -32,18 +32,20 @@ app.get('/salas',TokenAutenticacion ,(req, res) => {  // el TokenAutenticacion e
 //consulta de las salas
 // para acceder a la ru
 
+
 /**
  * @openapi
- * /rooms:
+ * /auth/rooms:
  *   get:
  *     tags:
  *       - Salas
  *     summary: Obtiene todas las salas
+ *     description: Devuelve una lista de todas las salas disponibles.
  *     security:
  *       - bearerAuth: []
  *     responses:
  *       200:
- *         description: Lista de salas
+ *         description: Una lista de salas.
  *         content:
  *           application/json:
  *             schema:
@@ -51,14 +53,17 @@ app.get('/salas',TokenAutenticacion ,(req, res) => {  // el TokenAutenticacion e
  *               items:
  *                 type: object
  *                 properties:
- *                   nombre: 
- *                     type: string
- *                   codigo: 
+ *                   id:
  *                     type: integer
+ *                     description: El ID de la sala.
+ *                   nombre:
+ *                     type: string
+ *                     description: El nombre de la sala.
  *       401:
- *         description: No autorizado
+ *         description: Acceso no autorizado, token no proporcionado o inválido.
+ *       500:
+ *         description: Error al recuperar datos de la base de datos.
  */
-
 loginRouter.get('/rooms',TokenAutenticacion, async (req, res) => {
   try {
       const db = await dbPromise;
@@ -71,6 +76,43 @@ loginRouter.get('/rooms',TokenAutenticacion, async (req, res) => {
 });
 
 // consulta de la sala por codigo de sala
+
+/**
+ * @openapi
+ * /auth/rooms/{Codigo}:
+ *   get:
+ *     tags:
+ *       - Salas
+ *     summary: Obtiene los detalles de una sala específica
+ *     description: Devuelve los detalles de la sala basándose en su código.
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: Codigo
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: El código numérico de la sala
+ *     responses:
+ *       200:
+ *         description: Detalles de la sala solicitada
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: integer
+ *                 nombre:
+ *                   type: string
+ *       404:
+ *         description: Sala no encontrada
+ *       401:
+ *         description: Acceso no autorizado, token no proporcionado o inválido
+ *       500:
+ *         description: Error al realizar la consulta a la base de datos
+ */
 
 loginRouter.get('/rooms/:Codigo',TokenAutenticacion, async (req, res) => {
   const codigo = parseInt(req.params.Codigo);
@@ -88,6 +130,123 @@ loginRouter.get('/rooms/:Codigo',TokenAutenticacion, async (req, res) => {
   }
 });
 
+/**
+ * @openapi
+ * auth/reserve/request:
+ *   post:
+ *     tags:
+ *       - Reservas
+ *     summary: Crear una nueva reserva
+ *     description: Crea una nueva reserva para una sala en un rango de fechas dado.
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               codigoSala:
+ *                 type: integer
+ *                 description: Código de la sala que se desea reservar.
+ *               fechaInicio:
+ *                 type: string
+ *                 format: date-time
+ *                 description: Fecha y hora de inicio de la reserva.
+ *               fechaTermino:
+ *                 type: string
+ *                 format: date-time
+ *                 description: Fecha y hora de finalización de la reserva.
+ *             example:
+ *               codigoSala: 123
+ *               fechaInicio: "2023-11-30T10:00:00Z"
+ *               fechaTermino: "2023-11-30T12:00:00Z"
+ *     responses:
+ *       201:
+ *         description: Reserva creada con éxito
+ *       400:
+ *         description: La sala ya está reservada en el rango de fechas solicitado
+ *       500:
+ *         description: Error al procesar la solicitud de reserva
+ *       401:
+ *         description: Acceso no autorizado, token no proporcionado o inválido
+ */
+
+loginRouter.post('/reserve/request', TokenAutenticacion, async (req, res) => {
+    const { codigoSala, fechaInicio, fechaTermino } = req.body;
+    const usuarioEmail = req.user.email; // Asumiendo que el email está en el token JWT
+
+    try {
+        const db = await dbPromise;
+
+        // Verificar si la sala está disponible en el rango de fechas solicitado
+        const reservaExistente = await db.get("SELECT * FROM Reservas WHERE Codigo_Sala = ? AND NOT (Fecha_Termino <= ? OR Fecha_Inicio >= ?)", [codigoSala, fechaInicio, fechaTermino]);
+
+        if (reservaExistente) {
+            return res.status(400).send('La sala ya está reservada en el rango de fechas solicitado');
+        }
+
+        // Insertar la nueva reserva en la base de datos
+        await db.run("INSERT INTO Reservas (Usuario, Codigo_Sala, Fecha_Inicio, Fecha_Termino) VALUES (?, ?, ?, ?)", [usuarioEmail, codigoSala, fechaInicio, fechaTermino]);
+
+        res.status(201).send('Reserva creada con éxito');
+    } catch (error) {
+        console.error(error.message);
+        res.status(500).send('Error al procesar la solicitud de reserva');
+    }
+});
+
+/**
+ * @openapi
+ * /auth/reserve/search:
+ *   post:
+ *     tags:
+ *       - Reservas
+ *     summary: Buscar reservas basadas en criterios
+ *     description: Realiza una búsqueda de reservas basada en varios criterios.
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               usuario:
+ *                 type: string
+ *                 description: Identificador del usuario
+ *               codigoSala:
+ *                 type: integer
+ *                 description: Código de la sala
+ *               fechaInicio:
+ *                 type: string
+ *                 format: date-time
+ *                 description: Fecha y hora de inicio para la búsqueda
+ *               fechaTermino:
+ *                 type: string
+ *                 format: date-time
+ *                 description: Fecha y hora de término para la búsqueda
+ *     responses:
+ *       200:
+ *         description: Lista de reservas que coinciden con los criterios
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   id:
+ *                     type: integer
+ *                   usuario:
+ *                     type: string
+ *       401:
+ *         description: Acceso no autorizado, token no proporcionado o inválido
+ *       500:
+ *         description: Error al buscar reservas
+ */
 
 
 loginRouter.post('/reserve/search', TokenAutenticacion, async (req, res) => {
@@ -127,6 +286,49 @@ loginRouter.post('/reserve/search', TokenAutenticacion, async (req, res) => {
 });
 
 //agenda para un código de sala y fecha dada
+/**
+ * @openapi
+ * /auth//reserve/{Codigo}/schedule/{Fecha}:
+ *   get:
+ *     tags:
+ *       - Reservas
+ *     summary: Obtener agenda de reservas para una sala en una fecha específica
+ *     description: Obtiene la agenda de reservas para una sala en una fecha específica.
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: Codigo
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: Código de la sala para la cual se desea obtener la agenda.
+ *       - in: path
+ *         name: Fecha
+ *         schema:
+ *           type: string
+ *           format: date
+ *         required: true
+ *         description: Fecha en la que se desea obtener la agenda en formato YYYY-MM-DD.
+ *     responses:
+ *       200:
+ *         description: Lista de reservas para la sala en la fecha especificada
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   id:
+ *                     type: integer
+ *                   usuario:
+ *                     type: string
+ *       401:
+ *         description: Acceso no autorizado, token no proporcionado o inválido
+ *       500:
+ *         description: Error al recuperar la agenda de reservas
+ */
 
 loginRouter.get('/reserve/:Codigo/schedule/:Fecha',TokenAutenticacion,  async (req, res) => {
   const { Codigo, Fecha } = req.params;
@@ -141,6 +343,34 @@ loginRouter.get('/reserve/:Codigo/schedule/:Fecha',TokenAutenticacion,  async (r
 });
 
 //eliminar reserva
+
+/**
+ * @openapi
+ * /auth/reserve/{token}/cancel:
+ *   delete:
+ *     tags:
+ *       - Reservas
+ *     summary: Cancelar una reserva
+ *     description: Cancela una reserva existente utilizando el token de la reserva.
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: token
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: Token único de la reserva que se desea cancelar.
+ *     responses:
+ *       200:
+ *         description: Reserva cancelada con éxito
+ *       404:
+ *         description: Reserva no encontrada
+ *       500:
+ *         description: Error al intentar cancelar la reserva
+ *       401:
+ *         description: Acceso no autorizado, token no proporcionado o inválido
+ */
 
 loginRouter.delete('/reserve/:token/cancel',TokenAutenticacion, async (req, res) => {
   const token = req.params.token;
@@ -157,32 +387,6 @@ loginRouter.delete('/reserve/:token/cancel',TokenAutenticacion, async (req, res)
       res.status(500).send("Error al anular la reserva");
   }
 });
-
-
-loginRouter.post('/reserve/request', TokenAutenticacion, async (req, res) => {
-    const { codigoSala, fechaInicio, fechaTermino } = req.body;
-    const usuarioEmail = req.user.email; // Asumiendo que el email está en el token JWT
-
-    try {
-        const db = await dbPromise;
-
-        // Verificar si la sala está disponible en el rango de fechas solicitado
-        const reservaExistente = await db.get("SELECT * FROM Reservas WHERE Codigo_Sala = ? AND NOT (Fecha_Termino <= ? OR Fecha_Inicio >= ?)", [codigoSala, fechaInicio, fechaTermino]);
-
-        if (reservaExistente) {
-            return res.status(400).send('La sala ya está reservada en el rango de fechas solicitado');
-        }
-
-        // Insertar la nueva reserva en la base de datos
-        await db.run("INSERT INTO Reservas (Usuario, Codigo_Sala, Fecha_Inicio, Fecha_Termino) VALUES (?, ?, ?, ?)", [usuarioEmail, codigoSala, fechaInicio, fechaTermino]);
-
-        res.status(201).send('Reserva creada con éxito');
-    } catch (error) {
-        console.error(error.message);
-        res.status(500).send('Error al procesar la solicitud de reserva');
-    }
-});
-
 
 
 
