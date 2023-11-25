@@ -11,7 +11,7 @@ const options = {
             description: "Esta es una API REST creada para manejar autenticación con Google."
         },
         server: [{
-            url : "http://159.223.193.199:9804"
+            url : "http://localhost:5000"
         }],
         components: {
             securitySchemes: {
