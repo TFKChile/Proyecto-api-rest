@@ -13,7 +13,7 @@ passport.use(
     {
       clientID: process.env.clientID,
       clientSecret: process.env.clientSecret,
-      callbackURL: "http://localhost:5000/auth/google",
+      callbackURL: "http://159.223.193.199:9804/auth/google",
     },
     function (accessToken, refreshToken, profile, done) {
       const response = emails.includes(profile.emails[0].value);
