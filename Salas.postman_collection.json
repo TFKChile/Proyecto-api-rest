@@ -1,0 +1,141 @@
+{
+	"info": {
+		"_postman_id": "bebf0044-4f1c-4a98-bb22-b66249880182",
+		"name": "Salas",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "31110960"
+	},
+	"item": [
+		{
+			"name": "Ver Salas",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIxMTIyNDU3NzkzNzEyNDgyODA5NjciLCJuYW1lIjoiQXJtYW5kbyBkZSBqZXN1cyBHYWxheiBtb250ZW5lZ3JvIiwiZW1haWwiOiJnYWxhei5tb250ZW5lZ3JvQGdtYWlsLmNvbSIsImlhdCI6MTcwMDg5Mjg5OCwiZXhwIjoxNzAwODk2NDk4fQ.ZL3l4pbsfkF9GUpJKn50X90yluTjXbpVc8Cofco_o8w",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:5000/auth/rooms",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5000",
+					"path": [
+						"auth",
+						"rooms"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Consultar sala por codigo",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test('Response status code is 404', function () {\r",
+							"    pm.response.to.have.status(404);\r",
+							"})\r",
+							"\r",
+							"pm.test('Response body contains the message \\'Sala no encontrada\\'', function () {\r",
+							"    pm.expect(pm.response.text()).to.include('Sala no encontrada');\r",
+							"})\r",
+							"\r",
+							"pm.test('Validate that the response is not empty', function () {\r",
+							"    pm.expect(pm.response.text()).to.not.be.empty;\r",
+							"})\r",
+							"\r",
+							"pm.test('Validate that the response is of type string', function () {\r",
+							"    pm.expect(pm.response.text()).to.be.a('string');\r",
+							"})\r",
+							"\r",
+							"pm.test('Response does not contain sensitive information', function () {\r",
+							"    pm.expect(pm.response.text()).to.not.include('password', 'Response should not contain password');\r",
+							"    pm.expect(pm.response.text()).to.not.include('creditCard', 'Response should not contain credit card information');\r",
+							"    pm.expect(pm.response.text()).to.not.include('socialSecurityNumber', 'Response should not contain social security number');\r",
+							"})\r",
+							"\r",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIxMTIyNDU3NzkzNzEyNDgyODA5NjciLCJuYW1lIjoiQXJtYW5kbyBkZSBqZXN1cyBHYWxheiBtb250ZW5lZ3JvIiwiZW1haWwiOiJnYWxhei5tb250ZW5lZ3JvQGdtYWlsLmNvbSIsImlhdCI6MTcwMDg5Mjg5OCwiZXhwIjoxNzAwODk2NDk4fQ.ZL3l4pbsfkF9GUpJKn50X90yluTjXbpVc8Cofco_o8w",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:5000/auth/rooms/1",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5000",
+					"path": [
+						"auth",
+						"rooms",
+						"1"
+					],
+					"query": [
+						{
+							"key": "Nombre",
+							"value": "",
+							"disabled": true
+						}
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"auth": {
+		"type": "oauth2",
+		"oauth2": [
+			{
+				"key": "addTokenTo",
+				"value": "header",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	]
+}
