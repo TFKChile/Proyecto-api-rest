@@ -20,9 +20,13 @@ passport.use(
       // IF EXISTS IN DATABASE
       if (response) {
         // Generar un JWT
-        const token = jwt.sign({ userId: profile.id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+        const token = jwt.sign({ 
+          userId: profile.id,       
+          name: profile.displayName,
+          email: profile.emails[0].value},
+          process.env.JWT_SECRET, { expiresIn: '1h' });
         // Enviar el JWT como respuesta
-        done(null, { token });
+        done(null, { token: token });
       } else {
         // SAVE IN DATABASE
         emails.push(profile.emails[0].value);

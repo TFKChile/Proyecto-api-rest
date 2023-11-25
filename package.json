@@ -17,6 +17,9 @@
     "jsonwebtoken": "^9.0.2",
     "passport": "^0.6.0",
     "passport-google-oauth": "^2.0.0",
-    "sqlite3": "^5.1.6"
+    "sqlite": "^5.1.1",
+    "sqlite3": "^5.1.6",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.0"
   }
 }
